@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "Clean Code",
+    "title": "A Handbook of Agile Software Craftsmanship",
+    "price": 0,
+    "category": "free",
+    "image": "https://example.com/images/clean-code.jpg"
+  },
+  {
+    "id": 2,
+    "name": "Introduction to Algorithms",
+    "title": "Algorithms and Data Structures",
+    "price": 0,
+    "category": "free",
+    "image": "https://example.com/images/algorithms.jpg"
+  },
+  {
+    "id": 3,
+    "name": "You Don't Know JS",
+    "title": "Deep Dive into JavaScript",
+    "price": 0,
+    "category": "free",
+    "image": "https://example.com/images/ydkjs.jpg"
+  },
+  {
+    "id": 4,
+    "name": "Atomic Habits",
+    "title": "An Easy & Proven Way to Build Good Habits",
+    "price": 0,
+    "category": "free",
+    "image": "https://example.com/images/atomic-habits.jpg"
+  },
+  {
+    "id": 5,
+    "name": "Database System Concepts",
+    "title": "Fundamentals of Databases",
+    "price": 0,
+    "category": "free",
+    "image": "https://example.com/images/database.jpg"
+  }
+]
