@@ -1,5 +1,5 @@
 import React from "react";
-const bannerimage = "/book1.jpg";
+import bannerimage from "../../../public/book1.jpg";
 function Banner() {
   return (
     <>
@@ -12,10 +12,10 @@ function Banner() {
             </h1>
           </div>
           <div className="text-xl">
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Soluta
-            modi ad consequuntur, nemo ullam atque impedit voluptatem quos
-            laudantium nesciunt magni unde ipsam voluptatibus debitis in ipsum
-            quaerat, alias veritatis?
+            A book store is a place where stories, knowledge, and imagination
+            come together. It offers a wide collection of books ranging from
+            fiction and non-fiction to academic and self-development genres.
+           
           </div>
           <div>
             <label className="input input-bordered md:w-140 flex items-center gap-2">

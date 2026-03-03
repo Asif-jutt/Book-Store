@@ -18,23 +18,23 @@ function Navbar() {
   const NavItem = (
     <>
       <li>
-        <a>Home</a>
+        <a href="/">Home</a>
       </li>
       <li>
-        <a>Course</a>
+        <a href="/course">Course</a>
       </li>
       <li>
-        <a>Contact</a>
+        <a href="/contact">Contact</a>
       </li>
       <li>
-        <a>About</a>
+        <a href="/about">About</a>
       </li>
     </>
   );
   return (
     <>
       <div
-        className={`max-w-screen-2xl container md:px-18 px-4 mx-auto flex flex-col md:flex-row fixed top-0 right-0 left-0 ${stick ? " sticky-navbar bg-base-200 shadow-md " : " "} transition-all duration-300`}
+        className={`max-w-screen-2xl container md:px-18 px-4 mx-auto flex flex-col md:flex-row sticky top-0 z-50  right-0 left-0 ${stick ? " sticky-navbar bg-base-200 shadow-md " : " "} transition-all duration-300`}
       >
         <div className="navbar ">
           <div className="navbar-start">

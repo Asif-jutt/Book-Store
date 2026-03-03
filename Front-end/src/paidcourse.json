@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "name": "Clean Code",
+    "title": "A Handbook of Agile Software Craftsmanship",
+    "price": 40,
+    "category": "paid",
+    "image": "https://images-na.ssl-images-amazon.com/images/I/41xShlnTZTL._SX374_BO1,204,203,200_.jpg"
+  },
+  {
+    "id": 2,
+    "name": "The Pragmatic Programmer",
+    "title": "Your Journey to Mastery, 20th Anniversary Edition",
+    "price": 45,
+    "category": "paid",
+    "image": "https://images-na.ssl-images-amazon.com/images/I/41as+WafrFL._SX396_BO1,204,203,200_.jpg"
+  },
+  {
+    "id": 3,
+    "name": "Design Patterns",
+    "title": "Elements of Reusable Object-Oriented Software",
+    "price": 50,
+    "category": "paid",
+    "image": "https://images-na.ssl-images-amazon.com/images/I/51k+eAqQG1L._SX377_BO1,204,203,200_.jpg"
+  },
+  {
+    "id": 4,
+    "name": "Refactoring",
+    "title": "Improving the Design of Existing Code",
+    "price": 42,
+    "category": "paid",
+    "image": "https://images-na.ssl-images-amazon.com/images/I/41jEbK-jG+L._SX396_BO1,204,203,200_.jpg"
+  },
+  {
+    "id": 5,
+    "name": "Code Complete",
+    "title": "A Practical Handbook of Software Construction",
+    "price": 38,
+    "category": "paid",
+    "image": "https://images-na.ssl-images-amazon.com/images/I/51NzB2NQc9L._SX380_BO1,204,203,200_.jpg"
+  },
+  {
+    "id": 6,
+    "name": "Introduction to Algorithms",
+    "title": "Third Edition",
+    "price": 80,
+    "category": "paid",
+    "image": "https://images-na.ssl-images-amazon.com/images/I/41SNcRCkqFL._SX396_BO1,204,203,200_.jpg"
+  },
+  {
+    "id": 7,
+    "name": "Python Crash Course",
+    "title": "A Hands-On, Project-Based Introduction to Programming",
+    "price": 30,
+    "category": "paid",
+    "image": "https://images-na.ssl-images-amazon.com/images/I/51Y5NI-I5jL._SX379_BO1,204,203,200_.jpg"
+  },
+  {
+    "id": 8,
+    "name": "Hacking: The Art of Exploitation",
+    "title": "2nd Edition",
+    "price": 55,
+    "category": "paid",
+    "image": "https://images-na.ssl-images-amazon.com/images/I/51u6Q6nqpPL._SX397_BO1,204,203,200_.jpg"
+  },
+  {
+    "id": 9,
+    "name": "AI and ML for On-Device Development",
+    "title": "A Programmer’s Guide",
+    "price": 45,
+    "category": "paid",
+    "image": "https://example.com/images/ai-ml-on-device.jpg"
+  },
+  {
+    "id": 10,
+    "name": "AI Crash Course",
+    "title": "A Practical Guide to AI Fundamentals",
+    "price": 50,
+    "category": "paid",
+    "image": "https://example.com/images/ai-crash-course.jpg"
+  }
+]

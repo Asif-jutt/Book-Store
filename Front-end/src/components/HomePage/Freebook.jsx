@@ -1,6 +1,6 @@
 import React from "react";
-import list from "../list.json";
 import "slick-carousel/slick/slick.css";
+import list from "../../list.json";
 import "slick-carousel/slick/slick-theme.css";
 import ReactSlick from "react-slick";
 const Slider = ReactSlick.default || ReactSlick;
@@ -47,9 +47,10 @@ function Freebook() {
         <div>
           <h1 className="font-semibold px-2">Free Offered Courses</h1>
           <p className="px-2">
-            Lorem ipsum dolor sit, amet consectetur adipisicing elit. Provident
-            sunt illo dignissimos suscipit, quae accusamus architecto obcaecati
-            eaque quam nesciunt expedita, fugiat voluptatibus accusantium.
+            We offer a variety of free courses designed to help learners build
+            skills and grow knowledge without any cost. These courses cover
+            different topics and are carefully created to be easy to understand
+            and practical.
           </p>
         </div>
         <div className="mt-6">
