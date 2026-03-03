@@ -3,11 +3,12 @@ import book2 from "../../../public/book2.jpg";
 function Card({data}) {
   return (
     <>
-      <div className="card bg-base-100 w-96 shadow-xl my-4">
+      <div className="card bg-base-100 w-96 shadow-xl my-4 dark:bg-slate-900 dark:text-white dark:border">
         <figure>
           <img
             src={book2}
             alt="Shoes"
+            className="rounded-xl hover:scale-110 transition-transform duration-300 cursor-pointer"
           />
         </figure>
         <div className="card-body">
