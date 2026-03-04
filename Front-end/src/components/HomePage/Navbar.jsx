@@ -1,5 +1,5 @@
 import React, { use, useEffect, useState } from "react";
-
+import Login from "./Login";
 function Navbar() {
   const [theme, setheme] = useState(
     localStorage.getItem("theme") ? localStorage.getItem("theme") : "light",
@@ -49,7 +49,14 @@ function Navbar() {
   return (
     <>
       <div
-        className={`max-w-screen-2xl dark:bg-slate-900 dark:text-white container md:px-18 px-4 mx-auto flex flex-col md:flex-row sticky top-0 z-50  right-0 left-0 ${stick ? " sticky-navbar bg-base-200 shadow-md  dark:bg-slate-600 dark:text-white" : " "} transition-all duration-300`}
+        className={`max-w-screen-2xl container md:px-18 px-4 mx-auto
+      flex flex-col md:flex-row sticky top-0 right-0 left-0 z-50
+      transition-all duration-300
+    ${
+     stick
+    ? "shadow-md bg-white dark:bg-slate-800"
+    : "bg-transparent dark:bg-slate-900"
+      }`}
       >
         <div className="navbar ">
           <div className="navbar-start">
@@ -82,7 +89,9 @@ function Navbar() {
                 {NavItem}
               </ul>
             </div>
-            <a className="cursor-pointer font-bold text-lg">Book Store</a>
+            <a href="/" className="cursor-pointer font-bold text-lg">
+              Book Store
+            </a>
           </div>
           <div className="navbar-end">
             <div className="navbar-center hidden lg:flex">
@@ -140,9 +149,15 @@ function Navbar() {
               </label>
             </div>
             <div>
-              <a className="btn bg-black text-white ml-2 rounded-2xl hover:bg-sky-950 duration-75">
+              <a
+                className="btn bg-black text-white ml-2 rounded-2xl hover:bg-sky-950 duration-75"
+                onClick={() =>
+                  document.getElementById("my_modal_3").showModal()
+                }
+              >
                 Login
               </a>
+              <Login />
             </div>
           </div>
         </div>
