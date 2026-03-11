@@ -1,17 +1,53 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 function Sign() {
-  const { register, handleSubmit, watch, formState } = useForm();
-  const onSubmit = (data) => console.log(data);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { signup } = useAuth();
+  const navigate = useNavigate();
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm();
+
+  const password = watch("password");
+
+  const onSubmit = async (data) => {
+    setIsLoading(true);
+    setError("");
+    try {
+      await signup({
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+      });
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Signup failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-20 bg-base-200 dark:bg-slate-900">
-      <div className="w-full max-w-md bg-base-100 rounded-2xl shadow-xl p-8 dark:bg-slate-900 dark:text-white dark:border">
+      <div className="w-full max-w-md bg-base-100 rounded-2xl shadow-xl p-8 dark:bg-slate-800 dark:text-white dark:border dark:border-slate-700">
         <h2 className="text-3xl font-bold text-center mb-2">Create Account</h2>
         <p className="text-center text-sm opacity-70 mb-6">
           Join us and start your journey
         </p>
+
+        {error && (
+          <div className="alert alert-error mb-4">
+            <span>{error}</span>
+          </div>
+        )}
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div>
@@ -21,9 +57,20 @@ function Sign() {
             <input
               type="text"
               placeholder="John Doe"
-              className="input input-bordered w-full dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
-              {...register("fullName", { required: true })}
+              className="input input-bordered w-full dark:bg-slate-700 dark:text-white"
+              {...register("fullName", {
+                required: "Full name is required",
+                minLength: {
+                  value: 2,
+                  message: "Name must be at least 2 characters",
+                },
+              })}
             />
+            {errors.fullName && (
+              <span className="text-red-500 text-sm">
+                {errors.fullName.message}
+              </span>
+            )}
           </div>
 
           <div>
@@ -33,9 +80,20 @@ function Sign() {
             <input
               type="email"
               placeholder="you@example.com"
-              className="input input-bordered w-full dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
-              {...register("email", { required: true })}
+              className="input input-bordered w-full dark:bg-slate-700 dark:text-white"
+              {...register("email", {
+                required: "Email is required",
+                pattern: {
+                  value: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+                  message: "Please enter a valid email",
+                },
+              })}
             />
+            {errors.email && (
+              <span className="text-red-500 text-sm">
+                {errors.email.message}
+              </span>
+            )}
           </div>
 
           <div>
@@ -45,9 +103,20 @@ function Sign() {
             <input
               type="password"
               placeholder="••••••••"
-              className="input input-bordered w-full dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
-              {...register("password", { required: true })}
+              className="input input-bordered w-full dark:bg-slate-700 dark:text-white"
+              {...register("password", {
+                required: "Password is required",
+                minLength: {
+                  value: 6,
+                  message: "Password must be at least 6 characters",
+                },
+              })}
             />
+            {errors.password && (
+              <span className="text-red-500 text-sm">
+                {errors.password.message}
+              </span>
+            )}
           </div>
 
           <div>
@@ -57,37 +126,38 @@ function Sign() {
             <input
               type="password"
               placeholder="••••••••"
-              className="input input-bordered w-full dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
-              {...register("confirmPassword", { required: true })}
+              className="input input-bordered w-full dark:bg-slate-700 dark:text-white"
+              {...register("confirmPassword", {
+                required: "Please confirm your password",
+                validate: (value) =>
+                  value === password || "Passwords do not match",
+              })}
             />
+            {errors.confirmPassword && (
+              <span className="text-red-500 text-sm">
+                {errors.confirmPassword.message}
+              </span>
+            )}
           </div>
 
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm"
-              {...register("agreeTerms", { required: true })}
-            />
-            I agree to the{" "}
-            <span className="link dark:text-sky-400 dark:hover:text-sky-300 ml-1">
-              Terms & Conditions
-            </span>
-          </label>
-
-          <button type="submit" className="btn btn-secondary w-full mt-4">
-            Create Account
+          <button
+            type="submit"
+            className="btn btn-secondary w-full mt-4"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              "Create Account"
+            )}
           </button>
         </form>
-
-        <div className="divider">OR</div>
-
-        <button className="btn btn-outline w-full">Continue with Google</button>
 
         <p className="text-center text-sm mt-4">
           Already have an account?
           <span
             onClick={() => document.getElementById("my_modal_3").showModal()}
-            className="link dark:text-sky-400 ml-1 cursor-pointer"
+            className="link link-primary ml-1 cursor-pointer"
           >
             Login
           </span>
