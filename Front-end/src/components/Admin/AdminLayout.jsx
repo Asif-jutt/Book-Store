@@ -124,7 +124,7 @@ function AdminLayout() {
           {/* Sidebar Footer */}
           {sidebarOpen && (
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700">
-              <div className="bg-gradient-to-r from-primary to-secondary rounded-lg p-4 text-white">
+              <div className="bg-linear-to-r from-primary to-secondary rounded-lg p-4 text-white">
                 <h4 className="font-semibold text-sm mb-1">Need Help?</h4>
                 <p className="text-xs text-white/80 mb-3">
                   Check our documentation

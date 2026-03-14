@@ -113,10 +113,10 @@ function BookList() {
         className="min-h-screen bg-slate-50 dark:bg-slate-900"
       >
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-primary/10 via-purple-500/10 to-secondary/10 dark:from-primary/5 dark:via-purple-500/5 dark:to-secondary/5 py-12">
+        <div className="bg-linear-to-r from-primary/10 via-purple-500/10 to-secondary/10 dark:from-primary/5 dark:via-purple-500/5 dark:to-secondary/5 py-12">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
                 Explore Our Library
               </h1>
               <p className="text-lg text-slate-600 dark:text-slate-300 mb-8">
@@ -326,7 +326,7 @@ function BookList() {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="h-52 bg-gradient-to-br from-primary via-purple-500 to-secondary flex items-center justify-center">
+                      <div className="h-52 bg-linear-to-br from-primary via-purple-500 to-secondary flex items-center justify-center">
                         <span className="text-6xl text-white/80">📖</span>
                       </div>
                     )}

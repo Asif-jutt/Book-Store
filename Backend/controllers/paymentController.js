@@ -54,26 +54,15 @@ const createCheckoutSession = async (req, res) => {
       const demoSessionId = `demo_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const demoPaymentIntentId = `demo_pi_${Date.now()}`;
 
-      // Create completed purchase directly
-      const purchase = await Purchase.create({
-        user: req.user._id,
-        book: bookId,
-        price: book.price,
-        currency: "usd",
-        paymentStatus: "completed",
-        paymentMethod: "demo",
-        stripeSessionId: demoSessionId,
-        transactionId: demoPaymentIntentId,
-        accessGrantedAt: new Date(),
-      });
-
-      // Create order record
-      await Order.create({
+      // Create order record - auto-approved on payment
+      const order = await Order.create({
         user: req.user._id,
         book: bookId,
         amount: book.price,
         currency: "usd",
         paymentStatus: "paid",
+        approvalStatus: "approved",
+        approvedAt: new Date(),
         paymentMethod: "demo",
         stripeSessionId: demoSessionId,
         paymentId: demoPaymentIntentId,
@@ -86,22 +75,35 @@ const createCheckoutSession = async (req, res) => {
         },
       });
 
-      // Increment student count
+      // Create purchase record to grant immediate access
+      await Purchase.create({
+        user: req.user._id,
+        book: bookId,
+        price: book.price,
+        currency: "usd",
+        paymentStatus: "completed",
+        paymentMethod: "demo",
+        transactionId: demoPaymentIntentId,
+        accessGrantedAt: new Date(),
+      });
+
+      // Update book student count
       await Book.findByIdAndUpdate(bookId, {
         $inc: { totalStudents: 1 },
       });
 
-      console.log("📚 DEMO MODE: Purchase completed for", book.title);
+      console.log(
+        "📚 DEMO MODE: Order auto-approved, access granted for",
+        book.title,
+      );
 
-      // Redirect directly to success page
       return res.status(200).json({
         success: true,
         demoMode: true,
         sessionId: demoSessionId,
         url: `${process.env.FRONTEND_URL}/payment/success?session_id=${demoSessionId}&demo=true`,
-        purchaseId: purchase._id,
-        message:
-          "Demo mode: Purchase completed instantly! (No real payment processed)",
+        orderId: order._id,
+        message: "Payment successful! You now have access to this book.",
       });
     }
 
@@ -143,13 +145,14 @@ const createCheckoutSession = async (req, res) => {
       stripeSessionId: session.id,
     });
 
-    // Create order record
+    // Create order record (pending until Stripe confirms payment)
     await Order.create({
       user: req.user._id,
       book: bookId,
       amount: book.price,
       currency: "usd",
       paymentStatus: "pending",
+      approvalStatus: "pending",
       paymentMethod: "stripe",
       stripeSessionId: session.id,
       customerEmail: req.user.email,
@@ -224,33 +227,64 @@ const handleWebhook = async (req, res) => {
 
 const handleSuccessfulPayment = async (session) => {
   try {
-    const purchase = await Purchase.findOne({
-      stripeSessionId: session.id,
-    });
+    // Auto-approve order on successful payment
+    const order = await Order.findOneAndUpdate(
+      { stripeSessionId: session.id },
+      {
+        paymentStatus: "paid",
+        approvalStatus: "approved",
+        approvedAt: new Date(),
+        paymentId: session.payment_intent,
+        stripePaymentIntentId: session.payment_intent,
+      },
+      { new: true },
+    );
 
-    if (purchase) {
-      purchase.paymentStatus = "completed";
-      purchase.transactionId = session.payment_intent;
-      purchase.stripePaymentIntentId = session.payment_intent;
-      purchase.accessGrantedAt = new Date();
-      await purchase.save();
-
-      // Update the corresponding order
-      await Order.findOneAndUpdate(
-        { stripeSessionId: session.id },
-        {
-          paymentStatus: "paid",
-          paymentId: session.payment_intent,
-          stripePaymentIntentId: session.payment_intent,
-        },
-      );
-
-      await Book.findByIdAndUpdate(purchase.book, {
-        $inc: { totalStudents: 1 },
+    if (order) {
+      // Create purchase record to grant immediate access
+      const existingPurchase = await Purchase.findOne({
+        user: order.user,
+        book: order.book,
+        paymentStatus: "completed",
       });
 
-      console.log("Purchase completed:", purchase._id);
+      if (!existingPurchase) {
+        // Update the pending purchase to completed
+        const purchase = await Purchase.findOneAndUpdate(
+          { stripeSessionId: session.id },
+          {
+            paymentStatus: "completed",
+            transactionId: session.payment_intent,
+            stripePaymentIntentId: session.payment_intent,
+            accessGrantedAt: new Date(),
+          },
+        );
+
+        // If no pending purchase found, create one
+        if (!purchase) {
+          await Purchase.create({
+            user: order.user,
+            book: order.book,
+            price: order.amount,
+            currency: order.currency,
+            paymentStatus: "completed",
+            paymentMethod: "stripe",
+            transactionId: session.payment_intent,
+            stripePaymentIntentId: session.payment_intent,
+            accessGrantedAt: new Date(),
+          });
+        }
+
+        await Book.findByIdAndUpdate(order.book, {
+          $inc: { totalStudents: 1 },
+        });
+      }
     }
+
+    console.log(
+      "Payment completed, order auto-approved for session:",
+      session.id,
+    );
   } catch (error) {
     console.error("Error handling successful payment:", error);
   }
@@ -284,22 +318,23 @@ const verifyPayment = async (req, res) => {
 
     // Handle demo mode sessions
     if (sessionId.startsWith("demo_session_")) {
-      const purchase = await Purchase.findOne({
+      const order = await Order.findOne({
         stripeSessionId: sessionId,
       }).populate("book", "title thumbnail");
 
-      if (purchase) {
+      if (order) {
         return res.status(200).json({
           success: true,
           demoMode: true,
-          message: "Demo payment verified successfully",
-          purchase: purchase,
+          message: "Payment successful! You now have access to this book.",
+          order: order,
+          approvalStatus: order.approvalStatus,
         });
       }
 
       return res.status(404).json({
         success: false,
-        message: "Demo purchase not found",
+        message: "Order not found",
       });
     }
 
@@ -315,17 +350,51 @@ const verifyPayment = async (req, res) => {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status === "paid") {
-      const purchase = await Purchase.findOne({
+      const order = await Order.findOneAndUpdate(
+        { stripeSessionId: sessionId },
+        {
+          paymentStatus: "paid",
+          approvalStatus: "approved",
+          approvedAt: new Date(),
+          paymentId: session.payment_intent,
+          stripePaymentIntentId: session.payment_intent,
+        },
+        { new: true },
+      );
+
+      let purchase = await Purchase.findOne({
         stripeSessionId: sessionId,
       }).populate("book", "title thumbnail");
 
-      if (purchase && purchase.paymentStatus !== "completed") {
-        purchase.paymentStatus = "completed";
-        purchase.transactionId = session.payment_intent;
-        purchase.stripePaymentIntentId = session.payment_intent;
-        purchase.accessGrantedAt = new Date();
-        await purchase.save();
+      let shouldIncrementStudents = false;
 
+      if (purchase) {
+        if (purchase.paymentStatus !== "completed") {
+          purchase.paymentStatus = "completed";
+          purchase.transactionId = session.payment_intent;
+          purchase.stripePaymentIntentId = session.payment_intent;
+          purchase.accessGrantedAt = new Date();
+          await purchase.save();
+          shouldIncrementStudents = true;
+        }
+      } else if (order) {
+        purchase = await Purchase.create({
+          user: order.user,
+          book: order.book,
+          price: order.amount,
+          currency: order.currency,
+          paymentStatus: "completed",
+          paymentMethod: order.paymentMethod,
+          stripeSessionId: sessionId,
+          transactionId: session.payment_intent,
+          stripePaymentIntentId: session.payment_intent,
+          accessGrantedAt: new Date(),
+        });
+        await purchase.populate("book", "title thumbnail");
+        shouldIncrementStudents = true;
+      }
+
+      if (shouldIncrementStudents && purchase?.book?._id) {
         await Book.findByIdAndUpdate(purchase.book._id, {
           $inc: { totalStudents: 1 },
         });

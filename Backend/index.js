@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
 const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
@@ -20,7 +21,11 @@ const bookRoutes = require("./routes/bookRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const purchaseRoutes = require("./routes/purchaseRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const securePdfRoutes = require("./routes/securePdfRoutes");
 const { handleWebhook } = require("./controllers/paymentController");
+const Order = require("./models/Order");
+const Purchase = require("./models/Purchase");
+const Book = require("./models/Book");
 
 connectDB();
 
@@ -37,7 +42,13 @@ app.post(
   handleWebhook,
 );
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -74,6 +85,7 @@ app.use("/api/books", bookRoutes);
 app.use("/api/payment", paymentLimiter, paymentRoutes);
 app.use("/api/purchases", purchaseRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/secure-pdf", securePdfRoutes);
 
 app.use(errorHandler);
 
@@ -85,8 +97,11 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`
+
+// Start server only when not imported (for Vercel serverless compatibility)
+if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+  app.listen(PORT, async () => {
+    console.log(`
 ╔════════════════════════════════════════════╗
 ║     BOOKSTORE API SERVER STARTED           ║
 ╠════════════════════════════════════════════╣
@@ -94,5 +109,52 @@ app.listen(PORT, () => {
 ║  Mode: ${process.env.NODE_ENV || "development"}                      ║
 ║  URL:  http://localhost:${PORT}               ║
 ╚════════════════════════════════════════════╝
-  `);
-});
+    `);
+
+    // One-time migration: auto-approve old pending orders and grant access
+    try {
+      const pendingOrders = await Order.find({
+        approvalStatus: "pending",
+        paymentMethod: "demo",
+      });
+      if (pendingOrders.length > 0) {
+        for (const order of pendingOrders) {
+          order.paymentStatus = "paid";
+          order.approvalStatus = "approved";
+          order.approvedAt = new Date();
+          await order.save();
+
+          // Ensure a completed Purchase exists
+          const existingPurchase = await Purchase.findOne({
+            user: order.user,
+            book: order.book,
+            paymentStatus: "completed",
+          });
+          if (!existingPurchase) {
+            await Purchase.create({
+              user: order.user,
+              book: order.book,
+              price: order.amount,
+              currency: order.currency || "usd",
+              paymentStatus: "completed",
+              paymentMethod: "demo",
+              transactionId: order.paymentId || `migrated_${order._id}`,
+              accessGrantedAt: new Date(),
+            });
+            await Book.findByIdAndUpdate(order.book, {
+              $inc: { totalStudents: 1 },
+            });
+          }
+        }
+        console.log(
+          `✅ Migrated ${pendingOrders.length} pending demo orders to approved`,
+        );
+      }
+    } catch (err) {
+      console.error("Migration error (non-fatal):", err.message);
+    }
+  });
+}
+
+// Export for Vercel serverless
+module.exports = app;

@@ -15,6 +15,12 @@ function AdminNavbar() {
   };
 
   const isActive = (path) => {
+    if (path === "/admin") {
+      return (
+        location.pathname === "/admin" ||
+        location.pathname === "/admin/analytics"
+      );
+    }
     return (
       location.pathname === path || location.pathname.startsWith(path + "/")
     );
@@ -25,7 +31,6 @@ function AdminNavbar() {
     { path: "/admin/books", label: "Books", icon: "📚" },
     { path: "/admin/users", label: "Users", icon: "👥" },
     { path: "/admin/orders", label: "Orders", icon: "🛒" },
-    { path: "/admin/analytics", label: "Analytics", icon: "📈" },
   ];
 
   return (
@@ -35,7 +40,7 @@ function AdminNavbar() {
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link to="/admin" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center font-bold text-lg">
+              <div className="w-10 h-10 bg-linear-to-br from-primary to-secondary rounded-lg flex items-center justify-center font-bold text-lg">
                 📖
               </div>
               <div className="hidden sm:block">
@@ -116,7 +121,7 @@ function AdminNavbar() {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800 transition-colors"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-sm font-bold">
+                <div className="w-8 h-8 bg-linear-to-br from-primary to-secondary rounded-full flex items-center justify-center text-sm font-bold">
                   {user?.fullName?.charAt(0).toUpperCase() || "A"}
                 </div>
                 <div className="hidden sm:block text-left">
@@ -165,12 +170,12 @@ function AdminNavbar() {
                     <span>User Dashboard</span>
                   </Link>
                   <Link
-                    to="/admin/settings"
+                    to="/dashboard/profile"
                     className="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                     onClick={() => setIsProfileOpen(false)}
                   >
                     <span>⚙️</span>
-                    <span>Settings</span>
+                    <span>Account Settings</span>
                   </Link>
                   <div className="border-t border-slate-700 mt-2 pt-2">
                     <button

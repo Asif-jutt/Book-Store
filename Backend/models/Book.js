@@ -33,6 +33,23 @@ const bookSchema = new mongoose.Schema(
       enum: ["free", "paid", "premium"],
       default: "free",
     },
+    // Book genre/subject
+    genre: {
+      type: String,
+      enum: [
+        "programming",
+        "ai",
+        "data-science",
+        "business",
+        "self-development",
+        "fiction",
+        "non-fiction",
+        "science",
+        "history",
+        "other",
+      ],
+      default: "other",
+    },
     image: {
       type: String,
       default: "",
@@ -40,6 +57,20 @@ const bookSchema = new mongoose.Schema(
     thumbnail: {
       type: String,
       default: "",
+    },
+    // PDF file path (stored securely)
+    pdfFile: {
+      type: String,
+      default: "",
+    },
+    // File metadata
+    fileSize: {
+      type: Number,
+      default: 0,
+    },
+    totalPages: {
+      type: Number,
+      default: 0,
     },
     content: {
       type: String,
@@ -71,6 +102,17 @@ const bookSchema = new mongoose.Schema(
       default: "English",
     },
     tags: [String],
+    isbn: {
+      type: String,
+      default: "",
+    },
+    publisher: {
+      type: String,
+      default: "",
+    },
+    publicationYear: {
+      type: Number,
+    },
     rating: {
       type: Number,
       default: 0,
@@ -89,6 +131,10 @@ const bookSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -100,5 +146,8 @@ const bookSchema = new mongoose.Schema(
 );
 
 bookSchema.index({ title: "text", description: "text", author: "text" });
+bookSchema.index({ genre: 1 });
+bookSchema.index({ category: 1 });
+bookSchema.index({ isPublished: 1, isFeatured: 1 });
 
 module.exports = mongoose.model("Book", bookSchema);

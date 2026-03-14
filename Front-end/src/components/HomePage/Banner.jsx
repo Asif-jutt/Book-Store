@@ -16,7 +16,7 @@ function Banner() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-primary/5 dark:from-slate-900 dark:via-slate-900 dark:to-primary/10">
+    <section className="relative overflow-hidden bg-linear-to-br from-slate-50 via-white to-primary/5 dark:from-slate-900 dark:via-slate-900 dark:to-primary/10">
       {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
@@ -38,7 +38,7 @@ function Banner() {
             {/* Main Headline */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white leading-tight">
               Unlock Your <br />
-              <span className="bg-gradient-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent">
                 Learning Potential
               </span>
             </h1>

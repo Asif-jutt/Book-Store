@@ -65,7 +65,7 @@ function Freebook() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
+      <section className="py-16 bg-linear-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center">
             <span className="loading loading-spinner loading-lg text-primary"></span>
@@ -80,7 +80,7 @@ function Freebook() {
   }
 
   return (
-    <section className="py-16 bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
+    <section className="py-16 bg-linear-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12">
@@ -138,7 +138,7 @@ function Freebook() {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                      <div className="w-full h-full bg-linear-to-br from-green-400 to-green-600 flex items-center justify-center">
                         <span className="text-5xl">📖</span>
                       </div>
                     )}

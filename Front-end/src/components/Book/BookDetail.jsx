@@ -21,6 +21,7 @@ function BookDetail() {
   const [purchasing, setPurchasing] = useState(false);
   const [error, setError] = useState(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [orderStatus, setOrderStatus] = useState(null);
   const [activeChapter, setActiveChapter] = useState(0);
 
   useEffect(() => {
@@ -35,6 +36,7 @@ function BookDetail() {
       if (response.success) {
         setBook(response.data);
         setHasAccess(response.hasAccess || false);
+        setOrderStatus(response.orderStatus || null);
 
         // If user has access, fetch full content
         if (response.hasAccess) {
@@ -207,9 +209,19 @@ function BookDetail() {
                 </div>
 
                 {hasAccess ? (
-                  <span className="badge badge-success badge-lg gap-2">
-                    ✓ You have access
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="badge badge-success badge-lg gap-2">
+                      ✓ You have access
+                    </span>
+                    {book.pdfFile && (
+                      <button
+                        onClick={() => navigate(`/read/${id}`)}
+                        className="btn btn-primary"
+                      >
+                        📖 Read Book
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <button
                     onClick={handlePurchase}

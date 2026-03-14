@@ -23,7 +23,7 @@ function PaymentSuccess() {
         const response = await verifyPayment(sessionId);
         if (response.success) {
           setStatus("success");
-          setPurchaseData(response.purchase);
+          setPurchaseData(response.purchase || response.order || null);
         } else {
           setStatus("error");
           setError(response.message || "Payment verification failed");

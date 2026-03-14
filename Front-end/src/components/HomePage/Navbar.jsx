@@ -295,7 +295,7 @@ function Navbar() {
                     className="flex items-center gap-2 p-1 pr-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                     aria-label="User menu"
                   >
-                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-linear-to-br from-primary to-secondary flex items-center justify-center">
                       {user?.profilePicture ? (
                         <img
                           src={`http://localhost:5000${user.profilePicture}`}

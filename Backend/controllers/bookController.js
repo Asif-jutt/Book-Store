@@ -1,5 +1,6 @@
 const Book = require("../models/Book");
 const Purchase = require("../models/Purchase");
+const Order = require("../models/Order");
 
 const getBooks = async (req, res) => {
   try {
@@ -64,6 +65,7 @@ const getBook = async (req, res) => {
 
     let hasAccess = false;
     let isPurchased = false;
+    let orderStatus = null;
 
     if (book.category === "free") {
       hasAccess = true;
@@ -71,13 +73,29 @@ const getBook = async (req, res) => {
       if (req.user.role === "admin") {
         hasAccess = true;
       } else {
+        // Check for completed purchase
         const purchase = await Purchase.findOne({
           user: req.user._id,
           book: book._id,
           paymentStatus: "completed",
         });
-        hasAccess = !!purchase;
-        isPurchased = !!purchase;
+        if (purchase) {
+          hasAccess = true;
+          isPurchased = true;
+        } else {
+          // Check for an order (pending or approved)
+          const order = await Order.findOne({
+            user: req.user._id,
+            book: book._id,
+            $or: [{ approvalStatus: "approved" }, { paymentStatus: "paid" }],
+          }).sort({ createdAt: -1 });
+
+          if (order) {
+            isPurchased = true;
+            orderStatus = order.approvalStatus || order.paymentStatus;
+            hasAccess = true;
+          }
+        }
       }
     }
 
@@ -98,6 +116,7 @@ const getBook = async (req, res) => {
       data: bookData,
       hasAccess,
       isPurchased,
+      orderStatus,
       isFree: book.category === "free",
     });
   } catch (error) {
@@ -140,17 +159,54 @@ const getBookContent = async (req, res) => {
 
 const createBook = async (req, res) => {
   try {
-    req.body.createdBy = req.user._id;
+    const bookData = { ...req.body, createdBy: req.user._id };
 
-    if (req.body.chapters && req.body.chapters.length > 0) {
-      req.body.totalChapters = req.body.chapters.length;
-      req.body.totalDuration = req.body.chapters.reduce(
+    // Parse chapters if sent as JSON string (FormData sends strings)
+    if (typeof bookData.chapters === "string") {
+      try {
+        bookData.chapters = JSON.parse(bookData.chapters);
+      } catch {
+        bookData.chapters = [];
+      }
+    }
+
+    // Parse tags if sent as JSON string
+    if (typeof bookData.tags === "string") {
+      try {
+        bookData.tags = JSON.parse(bookData.tags);
+      } catch {
+        bookData.tags = bookData.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
+      }
+    }
+
+    // Parse boolean
+    if (typeof bookData.isPublished === "string") {
+      bookData.isPublished = bookData.isPublished === "true";
+    }
+
+    // Handle uploaded files
+    if (req.files) {
+      if (req.files.pdf && req.files.pdf[0]) {
+        bookData.pdfFile = `uploads/pdfs/${req.files.pdf[0].filename}`;
+        bookData.fileSize = req.files.pdf[0].size;
+      }
+      if (req.files.cover && req.files.cover[0]) {
+        bookData.image = `uploads/covers/${req.files.cover[0].filename}`;
+      }
+    }
+
+    if (bookData.chapters && bookData.chapters.length > 0) {
+      bookData.totalChapters = bookData.chapters.length;
+      bookData.totalDuration = bookData.chapters.reduce(
         (sum, ch) => sum + (ch.duration || 0),
         0,
       );
     }
 
-    const book = await Book.create(req.body);
+    const book = await Book.create(bookData);
 
     res.status(201).json({
       success: true,
@@ -158,6 +214,15 @@ const createBook = async (req, res) => {
       data: book,
     });
   } catch (error) {
+    // Clean up uploaded files on error
+    if (req.files) {
+      const fs = require("fs");
+      Object.values(req.files)
+        .flat()
+        .forEach((f) => {
+          if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+        });
+    }
     res.status(500).json({
       success: false,
       message: error.message,
@@ -176,15 +241,67 @@ const updateBook = async (req, res) => {
       });
     }
 
-    if (req.body.chapters && req.body.chapters.length > 0) {
-      req.body.totalChapters = req.body.chapters.length;
-      req.body.totalDuration = req.body.chapters.reduce(
+    const updateData = { ...req.body };
+
+    // Parse chapters if sent as JSON string
+    if (typeof updateData.chapters === "string") {
+      try {
+        updateData.chapters = JSON.parse(updateData.chapters);
+      } catch {
+        delete updateData.chapters;
+      }
+    }
+
+    // Parse tags if sent as JSON string
+    if (typeof updateData.tags === "string") {
+      try {
+        updateData.tags = JSON.parse(updateData.tags);
+      } catch {
+        updateData.tags = updateData.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
+      }
+    }
+
+    // Parse boolean
+    if (typeof updateData.isPublished === "string") {
+      updateData.isPublished = updateData.isPublished === "true";
+    }
+
+    // Handle uploaded files
+    if (req.files) {
+      const fs = require("fs");
+      const path = require("path");
+
+      if (req.files.pdf && req.files.pdf[0]) {
+        // Delete old PDF if exists
+        if (book.pdfFile) {
+          const oldPath = path.join(__dirname, "..", book.pdfFile);
+          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        }
+        updateData.pdfFile = `uploads/pdfs/${req.files.pdf[0].filename}`;
+        updateData.fileSize = req.files.pdf[0].size;
+      }
+      if (req.files.cover && req.files.cover[0]) {
+        // Delete old cover if exists and is a local file
+        if (book.image && book.image.startsWith("uploads/")) {
+          const oldPath = path.join(__dirname, "..", book.image);
+          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        }
+        updateData.image = `uploads/covers/${req.files.cover[0].filename}`;
+      }
+    }
+
+    if (updateData.chapters && updateData.chapters.length > 0) {
+      updateData.totalChapters = updateData.chapters.length;
+      updateData.totalDuration = updateData.chapters.reduce(
         (sum, ch) => sum + (ch.duration || 0),
         0,
       );
     }
 
-    book = await Book.findByIdAndUpdate(req.params.id, req.body, {
+    book = await Book.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });

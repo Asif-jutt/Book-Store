@@ -42,7 +42,7 @@ function About() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary to-secondary text-white py-20">
+      <section className="bg-linear-to-r from-primary to-secondary text-white py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-5xl font-bold mb-6">About Our Bookstore</h1>
           <p className="text-xl max-w-3xl mx-auto">

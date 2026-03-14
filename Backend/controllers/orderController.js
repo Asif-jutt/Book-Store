@@ -370,6 +370,253 @@ const getOrderStats = async (req, res) => {
   }
 };
 
+// Admin: Get orders by approval status
+const getOrdersByApprovalStatus = async (req, res) => {
+  try {
+    const { status = "pending", page = 1, limit = 20 } = req.query;
+
+    const validStatuses = ["pending", "approved", "rejected", "completed"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid approval status",
+      });
+    }
+
+    const query = { approvalStatus: status };
+
+    const orders = await Order.find(query)
+      .populate("book", "title price category image author")
+      .populate("user", "fullName email")
+      .populate("approvedBy", "fullName email")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Order.countDocuments(query);
+
+    // Get counts for all statuses
+    const statusCounts = await Order.aggregate([
+      {
+        $group: {
+          _id: "$approvalStatus",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders,
+      statusCounts: statusCounts.reduce((acc, curr) => {
+        acc[curr._id] = curr.count;
+        return acc;
+      }, {}),
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Admin: Approve order
+const approveOrder = async (req, res) => {
+  try {
+    const { adminNotes } = req.body;
+    const orderId = req.params.id;
+
+    const order = await Order.findById(orderId)
+      .populate("book", "title")
+      .populate("user", "fullName email");
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Only pending or paid orders can be approved
+    if (order.approvalStatus !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: `Order cannot be approved. Current status: ${order.approvalStatus}`,
+      });
+    }
+
+    // Check if payment is completed
+    if (order.paymentStatus !== "paid" && order.paymentStatus !== "completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot approve order without completed payment",
+      });
+    }
+
+    // Update order approval status
+    order.approvalStatus = "approved";
+    order.approvedBy = req.user._id;
+    order.approvedAt = new Date();
+    if (adminNotes) order.adminNotes = adminNotes;
+
+    await order.save();
+
+    // Create purchase record to grant access
+    const existingPurchase = await Purchase.findOne({
+      user: order.user._id,
+      book: order.book._id,
+    });
+
+    if (!existingPurchase) {
+      await Purchase.create({
+        user: order.user._id,
+        book: order.book._id,
+        price: order.amount,
+        currency: order.currency,
+        paymentStatus: "completed",
+        paymentMethod: order.paymentMethod,
+        transactionId: order.paymentId || order.orderNumber,
+        accessGrantedAt: new Date(),
+      });
+
+      // Update book student count
+      await Book.findByIdAndUpdate(order.book._id, {
+        $inc: { totalStudents: 1 },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Order approved successfully. User now has access to the book.",
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Admin: Reject order
+const rejectOrder = async (req, res) => {
+  try {
+    const { rejectionReason, adminNotes } = req.body;
+    const orderId = req.params.id;
+
+    if (!rejectionReason) {
+      return res.status(400).json({
+        success: false,
+        message: "Rejection reason is required",
+      });
+    }
+
+    const order = await Order.findById(orderId)
+      .populate("book", "title")
+      .populate("user", "fullName email");
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Only pending orders can be rejected
+    if (order.approvalStatus !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: `Order cannot be rejected. Current status: ${order.approvalStatus}`,
+      });
+    }
+
+    // Update order
+    order.approvalStatus = "rejected";
+    order.approvedBy = req.user._id;
+    order.approvedAt = new Date();
+    order.rejectionReason = rejectionReason;
+    if (adminNotes) order.adminNotes = adminNotes;
+
+    await order.save();
+
+    // TODO: Initiate refund if payment was made
+    // This would integrate with Stripe refunds
+
+    res.status(200).json({
+      success: true,
+      message: "Order rejected successfully",
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Admin: Mark order as completed (after user has fully accessed content)
+const completeOrder = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Only approved orders can be completed
+    if (order.approvalStatus !== "approved") {
+      return res.status(400).json({
+        success: false,
+        message: `Order cannot be completed. Current status: ${order.approvalStatus}`,
+      });
+    }
+
+    order.approvalStatus = "completed";
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Order marked as completed",
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Get pending orders count (for admin dashboard notification)
+const getPendingOrdersCount = async (req, res) => {
+  try {
+    const count = await Order.countDocuments({ approvalStatus: "pending" });
+
+    res.status(200).json({
+      success: true,
+      pendingCount: count,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -378,4 +625,9 @@ module.exports = {
   getAllOrders,
   updateOrderStatus,
   getOrderStats,
+  getOrdersByApprovalStatus,
+  approveOrder,
+  rejectOrder,
+  completeOrder,
+  getPendingOrdersCount,
 };

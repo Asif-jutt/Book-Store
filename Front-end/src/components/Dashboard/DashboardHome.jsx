@@ -116,7 +116,7 @@ function DashboardHome() {
                 Update Profile
               </Link>
               <Link
-                to="/"
+                to="/books"
                 className="btn btn-outline btn-sm w-full border-white text-white hover:bg-white hover:text-secondary"
               >
                 Browse Books

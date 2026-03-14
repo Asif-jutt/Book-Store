@@ -4,7 +4,7 @@ import "./index.css";
 import Course from "./Course/Course.jsx";
 import { Routes, Route } from "react-router-dom";
 import Signup from "./components/HomePage/Signup.jsx";
-import Login from "./components/HomePage/Login.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import AdminRoute from "./components/AdminRoute.jsx";
 import DashboardLayout from "./components/Dashboard/DashboardLayout.jsx";
@@ -16,12 +16,14 @@ import OrderHistory from "./components/Dashboard/OrderHistory.jsx";
 import BookList from "./components/Book/BookList.jsx";
 import BookDetail from "./components/Book/BookDetail.jsx";
 import BookReader from "./components/Book/BookReader.jsx";
+import SecurePDFViewer from "./components/SecurePDFViewer.jsx";
 import PaymentSuccess from "./components/Payment/PaymentSuccess.jsx";
 import PaymentCancel from "./components/Payment/PaymentCancel.jsx";
 import AdminDashboard from "./components/Admin/AdminDashboard.jsx";
 import BookForm from "./components/Admin/BookForm.jsx";
 import Contact from "./pages/Contact.jsx";
 import About from "./pages/About.jsx";
+import NotFound from "./pages/NotFound.jsx";
 
 function App() {
   return (
@@ -31,7 +33,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/course" element={<Course />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
 
@@ -43,6 +45,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <BookReader />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Secure PDF Reader Route */}
+          <Route
+            path="/read/:bookId"
+            element={
+              <ProtectedRoute>
+                <SecurePDFViewer />
               </ProtectedRoute>
             }
           />
@@ -77,6 +89,38 @@ function App() {
             }
           />
           <Route
+            path="/admin/books"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/orders"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
             path="/admin/books/new"
             element={
               <AdminRoute>
@@ -92,6 +136,9 @@ function App() {
               </AdminRoute>
             }
           />
+
+          {/* 404 Catch-all */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </>

@@ -67,7 +67,7 @@ function FeaturedBooks() {
             >
               {/* Featured Badge for first item */}
               {index === 0 && (
-                <div className="absolute top-4 left-4 z-10 px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full shadow-lg">
+                <div className="absolute top-4 left-4 z-10 px-4 py-2 bg-linear-to-r from-primary to-secondary text-white font-semibold rounded-full shadow-lg">
                   ⭐ Most Popular
                 </div>
               )}
@@ -84,13 +84,13 @@ function FeaturedBooks() {
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary via-purple-500 to-secondary flex items-center justify-center">
+                  <div className="w-full h-full bg-linear-to-br from-primary via-purple-500 to-secondary flex items-center justify-center">
                     <span className="text-6xl">📖</span>
                   </div>
                 )}
 
                 {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
                 {/* Content overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-6">

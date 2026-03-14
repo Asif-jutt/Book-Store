@@ -56,7 +56,7 @@ function Features() {
           </span>
           <h2 className="mt-6 text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
             Everything You Need to <br className="hidden md:block" />
-            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
               Level Up Your Skills
             </span>
           </h2>
@@ -97,7 +97,7 @@ function Features() {
         </div>
 
         {/* Stats Section */}
-        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 p-8 bg-gradient-to-r from-primary/5 via-purple-500/5 to-secondary/5 rounded-3xl border border-slate-200 dark:border-slate-700">
+        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 p-8 bg-linear-to-r from-primary/5 via-purple-500/5 to-secondary/5 rounded-3xl border border-slate-200 dark:border-slate-700">
           {[
             { value: "20+", label: "Quality Books" },
             { value: "10k+", label: "Happy Learners" },
@@ -105,7 +105,7 @@ function Features() {
             { value: "24/7", label: "Access Time" },
           ].map((stat, index) => (
             <div key={index} className="text-center">
-              <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <div className="text-4xl md:text-5xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
                 {stat.value}
               </div>
               <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">

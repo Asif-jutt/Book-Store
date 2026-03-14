@@ -1,5 +1,6 @@
 const Purchase = require("../models/Purchase");
 const Book = require("../models/Book");
+const Order = require("../models/Order");
 
 const checkCourseAccess = async (req, res, next) => {
   try {
@@ -39,13 +40,20 @@ const checkCourseAccess = async (req, res, next) => {
       return next();
     }
 
-    const purchase = await Purchase.findOne({
-      user: req.user._id,
-      book: bookId,
-      paymentStatus: "completed",
-    });
+    const [purchase, paidOrder] = await Promise.all([
+      Purchase.findOne({
+        user: req.user._id,
+        book: bookId,
+        paymentStatus: "completed",
+      }),
+      Order.findOne({
+        user: req.user._id,
+        book: bookId,
+        $or: [{ approvalStatus: "approved" }, { paymentStatus: "paid" }],
+      }).sort({ createdAt: -1 }),
+    ]);
 
-    if (!purchase) {
+    if (!purchase && !paidOrder) {
       return res.status(403).json({
         success: false,
         message: "Please purchase this course to access it",
@@ -61,6 +69,7 @@ const checkCourseAccess = async (req, res, next) => {
 
     req.book = book;
     req.purchase = purchase;
+    req.order = paidOrder;
     req.hasAccess = true;
     next();
   } catch (error) {
@@ -103,15 +112,23 @@ const optionalCourseAccess = async (req, res, next) => {
       return next();
     }
 
-    const purchase = await Purchase.findOne({
-      user: req.user._id,
-      book: bookId,
-      paymentStatus: "completed",
-    });
+    const [purchase, paidOrder] = await Promise.all([
+      Purchase.findOne({
+        user: req.user._id,
+        book: bookId,
+        paymentStatus: "completed",
+      }),
+      Order.findOne({
+        user: req.user._id,
+        book: bookId,
+        $or: [{ approvalStatus: "approved" }, { paymentStatus: "paid" }],
+      }).sort({ createdAt: -1 }),
+    ]);
 
     req.book = book;
     req.purchase = purchase;
-    req.hasAccess = !!purchase;
+    req.order = paidOrder;
+    req.hasAccess = !!(purchase || paidOrder);
     next();
   } catch (error) {
     req.hasAccess = false;

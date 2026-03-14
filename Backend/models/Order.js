@@ -20,14 +20,33 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "usd",
     },
+    // Payment status from Stripe
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
+    // Admin approval status - separate from payment
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "completed"],
+      default: "pending",
+    },
+    // Admin who approved/rejected
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    approvedAt: {
+      type: Date,
+    },
+    rejectionReason: {
+      type: String,
+      default: "",
+    },
     paymentMethod: {
       type: String,
-      enum: ["stripe", "razorpay", "paypal", "free"],
+      enum: ["stripe", "razorpay", "paypal", "free", "demo"],
       required: true,
     },
     paymentId: {
@@ -65,6 +84,11 @@ const orderSchema = new mongoose.Schema(
       bookAuthor: String,
       bookCategory: String,
     },
+    // Admin notes
+    adminNotes: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
@@ -82,5 +106,10 @@ orderSchema.pre("save", async function (next) {
   }
   next();
 });
+
+// Indexes
+orderSchema.index({ user: 1, approvalStatus: 1 });
+orderSchema.index({ paymentStatus: 1, approvalStatus: 1 });
+orderSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Order", orderSchema);

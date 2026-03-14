@@ -16,6 +16,7 @@ function BookForm() {
     author: "",
     description: "",
     category: "free",
+    genre: "other",
     price: 0,
     thumbnail: "",
     level: "beginner",
@@ -24,6 +25,11 @@ function BookForm() {
     isPublished: false,
     chapters: [{ title: "", content: "", duration: "", videoUrl: "" }],
   });
+
+  const [pdfFile, setPdfFile] = useState(null);
+  const [coverFile, setCoverFile] = useState(null);
+  const [existingPdf, setExistingPdf] = useState("");
+  const [existingCover, setExistingCover] = useState("");
 
   useEffect(() => {
     if (isEditing) {
@@ -42,6 +48,7 @@ function BookForm() {
           author: book.author || "",
           description: book.description || "",
           category: book.category || "free",
+          genre: book.genre || "other",
           price: book.price || 0,
           thumbnail: book.thumbnail || "",
           level: book.level || "beginner",
@@ -53,6 +60,8 @@ function BookForm() {
               ? book.chapters
               : [{ title: "", content: "", duration: "", videoUrl: "" }],
         });
+        if (book.pdfFile) setExistingPdf(book.pdfFile);
+        if (book.image) setExistingCover(book.image);
       }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch book");
@@ -97,21 +106,38 @@ function BookForm() {
     setError(null);
 
     try {
-      const bookData = {
-        ...formData,
-        price: formData.category === "free" ? 0 : parseFloat(formData.price),
-        tags: formData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-        chapters: formData.chapters.filter((ch) => ch.title.trim()),
-      };
+      const data = new FormData();
+      data.append("title", formData.title);
+      data.append("author", formData.author);
+      data.append("description", formData.description);
+      data.append("category", formData.category);
+      data.append("genre", formData.genre);
+      data.append(
+        "price",
+        formData.category === "free" ? 0 : parseFloat(formData.price),
+      );
+      data.append("thumbnail", formData.thumbnail);
+      data.append("level", formData.level);
+      data.append("language", formData.language);
+      data.append("isPublished", formData.isPublished);
+
+      const tags = formData.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+      data.append("tags", JSON.stringify(tags));
+
+      const chapters = formData.chapters.filter((ch) => ch.title.trim());
+      data.append("chapters", JSON.stringify(chapters));
+
+      if (pdfFile) data.append("pdf", pdfFile);
+      if (coverFile) data.append("cover", coverFile);
 
       let response;
       if (isEditing) {
-        response = await updateBook(id, bookData);
+        response = await updateBook(id, data);
       } else {
-        response = await createBook(bookData);
+        response = await createBook(data);
       }
 
       if (response.success) {
@@ -208,6 +234,51 @@ function BookForm() {
               />
             </div>
 
+            {/* Cover Image Upload */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Cover Image (upload)</span>
+              </label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={(e) => setCoverFile(e.target.files[0] || null)}
+                className="file-input file-input-bordered w-full"
+              />
+              {existingCover && !coverFile && (
+                <label className="label">
+                  <span className="label-text-alt text-success">
+                    Current: {existingCover}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {/* PDF Upload */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Book PDF *</span>
+              </label>
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => setPdfFile(e.target.files[0] || null)}
+                className="file-input file-input-bordered w-full"
+              />
+              {existingPdf && !pdfFile && (
+                <label className="label">
+                  <span className="label-text-alt text-success">
+                    PDF already uploaded
+                  </span>
+                </label>
+              )}
+              <label className="label">
+                <span className="label-text-alt">
+                  Max 100MB. Only PDF files allowed.
+                </span>
+              </label>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="form-control">
                 <label className="label">
@@ -256,6 +327,29 @@ function BookForm() {
                   <option value="advanced">Advanced</option>
                 </select>
               </div>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Genre</span>
+              </label>
+              <select
+                name="genre"
+                value={formData.genre}
+                onChange={handleChange}
+                className="select select-bordered"
+              >
+                <option value="programming">Programming</option>
+                <option value="ai">AI</option>
+                <option value="data-science">Data Science</option>
+                <option value="business">Business</option>
+                <option value="self-development">Self Development</option>
+                <option value="fiction">Fiction</option>
+                <option value="non-fiction">Non-Fiction</option>
+                <option value="science">Science</option>
+                <option value="history">History</option>
+                <option value="other">Other</option>
+              </select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

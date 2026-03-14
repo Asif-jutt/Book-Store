@@ -27,7 +27,7 @@ const purchaseSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["stripe", "razorpay", "paypal", "free"],
+      enum: ["stripe", "razorpay", "paypal", "free", "demo"],
       required: true,
     },
     transactionId: {

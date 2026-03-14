@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getAdminBooks, deleteBook } from "../../services/bookService";
 import { getAllPurchases } from "../../services/purchaseService";
 import { getAllOrders, getOrderStats } from "../../services/orderService";
@@ -10,7 +10,26 @@ import {
 } from "../../services/userService";
 import AdminNavbar from "./AdminNavbar";
 
+const TAB_ROUTE_MAP = {
+  "/admin": "overview",
+  "/admin/analytics": "overview",
+  "/admin/books": "books",
+  "/admin/orders": "orders",
+  "/admin/users": "users",
+};
+
+const TAB_PATH_MAP = {
+  overview: "/admin",
+  books: "/admin/books",
+  orders: "/admin/orders",
+  users: "/admin/users",
+};
+
 function AdminDashboard() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialTab = TAB_ROUTE_MAP[location.pathname] || "overview";
+
   const [books, setBooks] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -19,13 +38,31 @@ function AdminDashboard() {
   const [orderStats, setOrderStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [searchTerm, setSearchTerm] = useState("");
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Sync tab with URL pathname
+  useEffect(() => {
+    const tabFromUrl = TAB_ROUTE_MAP[location.pathname] || "overview";
+    if (tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+      setSearchTerm("");
+    }
+  }, [location.pathname]);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSearchTerm("");
+    const path = TAB_PATH_MAP[tabId] || "/admin";
+    if (location.pathname !== path) {
+      navigate(path, { replace: true });
+    }
+  };
 
   // Auto-dismiss notifications
   useEffect(() => {
@@ -306,7 +343,7 @@ function AdminDashboard() {
                   </span>
                 </p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-linear-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center">
                 <span className="text-2xl">📚</span>
               </div>
             </div>
@@ -327,7 +364,7 @@ function AdminDashboard() {
                   paid orders
                 </p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-linear-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center">
                 <span className="text-2xl">💰</span>
               </div>
             </div>
@@ -348,7 +385,7 @@ function AdminDashboard() {
                   {users.filter((u) => u.role === "user").length} users
                 </p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-linear-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center">
                 <span className="text-2xl">👥</span>
               </div>
             </div>
@@ -369,7 +406,7 @@ function AdminDashboard() {
                   free enrollments
                 </p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-linear-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center">
                 <span className="text-2xl">🛒</span>
               </div>
             </div>
@@ -403,7 +440,7 @@ function AdminDashboard() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? "border-primary text-primary"
@@ -431,7 +468,7 @@ function AdminDashboard() {
           {/* Tab Content */}
           <div className="p-6">
             {/* Search Bar - Nielsen #7: Flexibility and efficiency of use */}
-            {activeTab !== "overview" && (
+            {activeTab !== "overview" && activeTab !== "approvals" && (
               <div className="mb-6">
                 <div className="relative max-w-md">
                   <input
@@ -476,12 +513,12 @@ function AdminDashboard() {
                     <h3 className="font-semibold text-lg text-slate-800 dark:text-white">
                       Recent Books
                     </h3>
-                    <Link
-                      to="/admin/books"
+                    <button
+                      onClick={() => handleTabChange("books")}
                       className="text-sm text-primary hover:underline"
                     >
                       View all →
-                    </Link>
+                    </button>
                   </div>
                   <div className="space-y-3">
                     {books.slice(0, 5).map((book) => (
@@ -527,12 +564,12 @@ function AdminDashboard() {
                     <h3 className="font-semibold text-lg text-slate-800 dark:text-white">
                       Recent Orders
                     </h3>
-                    <Link
-                      to="/admin/orders"
+                    <button
+                      onClick={() => handleTabChange("orders")}
                       className="text-sm text-primary hover:underline"
                     >
                       View all →
-                    </Link>
+                    </button>
                   </div>
                   <div className="space-y-3">
                     {orders.slice(0, 5).map((order) => (
@@ -856,7 +893,7 @@ function AdminDashboard() {
                       >
                         <td>
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold">
+                            <div className="w-10 h-10 bg-linear-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold">
                               {user.fullName?.charAt(0).toUpperCase() || "?"}
                             </div>
                             <div>
@@ -935,33 +972,33 @@ function AdminDashboard() {
                 Add Book
               </span>
             </Link>
-            <Link
-              to="/admin/users"
+            <button
+              onClick={() => handleTabChange("users")}
               className="flex flex-col items-center gap-2 p-4 bg-slate-50 dark:bg-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
             >
               <span className="text-2xl">👤</span>
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Manage Users
               </span>
-            </Link>
-            <Link
-              to="/admin/orders"
+            </button>
+            <button
+              onClick={() => handleTabChange("orders")}
               className="flex flex-col items-center gap-2 p-4 bg-slate-50 dark:bg-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
             >
               <span className="text-2xl">📦</span>
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 View Orders
               </span>
-            </Link>
-            <Link
-              to="/admin/settings"
+            </button>
+            <button
+              onClick={() => handleTabChange("books")}
               className="flex flex-col items-center gap-2 p-4 bg-slate-50 dark:bg-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
             >
-              <span className="text-2xl">⚙️</span>
+              <span className="text-2xl">📊</span>
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Settings
+                All Books
               </span>
-            </Link>
+            </button>
           </div>
         </div>
       </div>
