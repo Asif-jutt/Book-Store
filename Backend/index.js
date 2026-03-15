@@ -1,160 +1,49 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const cookieParser = require("cookie-parser");
-const path = require("path");
-const fs = require("fs");
+/**
+ * Bookstore API Server - Main Entry Point
+ * Enhanced with Clean Architecture, Security, and Production-Ready Patterns
+ */
+
+require("express-async-errors");
 require("dotenv").config();
 
-const connectDB = require("./config/db");
-const errorHandler = require("./middleware/error");
-const {
-  apiLimiter,
-  authLimiter,
-  paymentLimiter,
-} = require("./middleware/rateLimiter");
+const app = require("./src/app");
+const logger = require("./src/utils/logger");
+const config = require("./src/config/environment");
 
-const authRoutes = require("./routes/authRoutes");
-const userRoutes = require("./routes/userRoutes");
-const fileRoutes = require("./routes/fileRoutes");
-const bookRoutes = require("./routes/bookRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
-const purchaseRoutes = require("./routes/purchaseRoutes");
-const orderRoutes = require("./routes/orderRoutes");
-const securePdfRoutes = require("./routes/securePdfRoutes");
-const { handleWebhook } = require("./controllers/paymentController");
-const Order = require("./models/Order");
-const Purchase = require("./models/Purchase");
-const Book = require("./models/Book");
+const PORT = config.PORT;
 
-connectDB();
-
-const app = express();
-
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-app.post(
-  "/api/payment/webhook",
-  express.raw({ type: "application/json" }),
-  handleWebhook,
-);
-
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
-  }),
-);
-app.use(cookieParser());
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  }),
-);
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
-// Apply rate limiting to API routes
-app.use("/api/", apiLimiter);
-
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "Welcome to Bookstore API",
-    endpoints: {
-      auth: "/api/auth",
-      user: "/api/user",
-      files: "/api/files",
-      books: "/api/books",
-      payment: "/api/payment",
-      purchases: "/api/purchases",
-      orders: "/api/orders",
-    },
-  });
-});
-
-app.use("/api/auth", authLimiter, authRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/files", fileRoutes);
-app.use("/api/books", bookRoutes);
-app.use("/api/payment", paymentLimiter, paymentRoutes);
-app.use("/api/purchases", purchaseRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api/secure-pdf", securePdfRoutes);
-
-app.use(errorHandler);
-
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found",
-  });
-});
-
-const PORT = process.env.PORT || 5000;
-
-// Start server only when not imported (for Vercel serverless compatibility)
-if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
-  app.listen(PORT, async () => {
-    console.log(`
+// Start server only when not imported
+if (require.main === module) {
+  const server = app.listen(PORT, () => {
+    logger.info(`
 ╔════════════════════════════════════════════╗
-║     BOOKSTORE API SERVER STARTED           ║
+║     🚀 BOOKSTORE API SERVER STARTED        ║
 ╠════════════════════════════════════════════╣
 ║  Port: ${PORT}                               ║
-║  Mode: ${process.env.NODE_ENV || "development"}                      ║
-║  URL:  http://localhost:${PORT}               ║
+║  Mode: ${config.NODE_ENV}                      ║
+║  URL:  ${config.API_URL}      ║
+║  Version: 2.0 (Enterprise Architecture)   ║
 ╚════════════════════════════════════════════╝
     `);
+  });
 
-    // One-time migration: auto-approve old pending orders and grant access
-    try {
-      const pendingOrders = await Order.find({
-        approvalStatus: "pending",
-        paymentMethod: "demo",
-      });
-      if (pendingOrders.length > 0) {
-        for (const order of pendingOrders) {
-          order.paymentStatus = "paid";
-          order.approvalStatus = "approved";
-          order.approvedAt = new Date();
-          await order.save();
+  // Handle graceful shutdown
+  process.on("SIGTERM", () => {
+    logger.info("SIGTERM received, starting graceful shutdown");
+    server.close(() => {
+      logger.info("Server closed");
+      process.exit(0);
+    });
+  });
 
-          // Ensure a completed Purchase exists
-          const existingPurchase = await Purchase.findOne({
-            user: order.user,
-            book: order.book,
-            paymentStatus: "completed",
-          });
-          if (!existingPurchase) {
-            await Purchase.create({
-              user: order.user,
-              book: order.book,
-              price: order.amount,
-              currency: order.currency || "usd",
-              paymentStatus: "completed",
-              paymentMethod: "demo",
-              transactionId: order.paymentId || `migrated_${order._id}`,
-              accessGrantedAt: new Date(),
-            });
-            await Book.findByIdAndUpdate(order.book, {
-              $inc: { totalStudents: 1 },
-            });
-          }
-        }
-        console.log(
-          `✅ Migrated ${pendingOrders.length} pending demo orders to approved`,
-        );
-      }
-    } catch (err) {
-      console.error("Migration error (non-fatal):", err.message);
-    }
+  process.on("SIGINT", () => {
+    logger.info("SIGINT received, starting graceful shutdown");
+    server.close(() => {
+      logger.info("Server closed");
+      process.exit(0);
+    });
   });
 }
 
-// Export for Vercel serverless
+// Always export for Serverless (Vercel) and testing
 module.exports = app;

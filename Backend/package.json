@@ -6,7 +6,13 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint .",
+    "seed": "node seedBooks.js",
+    "seed:admin": "node seedAdmin.js",
+    "seed:100": "node seed100Books.js"
   },
   "keywords": [
     "bookstore",
@@ -29,9 +35,24 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.0",
     "multer": "^1.4.5-lts.1",
-    "stripe": "^14.25.0"
+    "stripe": "^14.25.0",
+    "redis": "^4.6.10",
+    "joi": "^17.11.0",
+    "winston": "^3.11.0",
+    "morgan": "^1.10.0",
+    "express-async-errors": "^3.1.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
+    "nodemailer": "^6.9.7",
+    "pdf-lib": "^1.17.1",
+    "axios": "^1.6.2",
+    "bull": "^4.11.4",
+    "amqplib": "^0.10.3"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "@types/jest": "^29.5.8"
   }
 }
